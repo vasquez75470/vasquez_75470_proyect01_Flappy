@@ -1,3 +1,5 @@
+#Eduardo Vasquez
+
 from graphics import*
 import random
 import math
