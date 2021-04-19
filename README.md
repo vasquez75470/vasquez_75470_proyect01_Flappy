@@ -5,3 +5,4 @@ instance of bird
 instance of enemies
 for move instance
 Algorithm math disntance
+create one main for run the functions
