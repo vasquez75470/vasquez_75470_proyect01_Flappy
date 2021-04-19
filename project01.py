@@ -1,4 +1,5 @@
 #Eduardo Vasquez
+#Num de Estudiante:75470
 
 from graphics import*
 import random
