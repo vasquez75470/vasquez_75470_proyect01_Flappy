@@ -1,6 +1,6 @@
 #Eduardo Vasquez
 #Num de Estudiante:75470
-#vasquez_75470_proyect01_B Flappy
+#vasquez_75470_proyect01 Flappy
 
 from graphics import*
 import random
