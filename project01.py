@@ -1,6 +1,7 @@
 #Eduardo Vasquez
 #Num de Estudiante:75470
-#vasquez_75470_proyect01 Flappy
+#vasquez_75470_proyect01_C Flappy
+# with class
 
 from graphics import*
 import random
@@ -12,137 +13,153 @@ WIN_WIDTH = 500
 WIN_HEIGHT = 500
 WIN_TITLE = 'Flappy'
 
-#Define Global Variables
-exit_game = False
-game_lost = False
-bird_collided = False
-
 #Define Bird Variables
-birdXPosition = WIN_WIDTH / 8
-birdYPosition = WIN_HEIGHT / 2
-birdRadious = 6
-birdDirection = 1
-birdSpeed = 6
 birdColor = color_rgb(0,102,0)
-bird = Circle(Point(birdXPosition, birdYPosition), birdRadious)
 
 #Define Enemy Circles
-enemyList = []
-enemyRadious = 12
-enemySpeed = 6
 enemyColor = 'black'
-enemyTotalPerScreen = 16
 
-def handle_input(win):
-    key = win.checkKey()
-    if key == "space":
-        change_direction()
-    elif key == "Escape":
-        global exit_game
-        exit_game = True
+class Bird():
+    def __init__(self, max_birds):
+        self.max_birds = max_birds
+        self.birds = []
+        
+    def add_bird(self, bird):
+        if len(self.birds) < self.max_birds:
+            self.birds.append(bird)
 
-def draw_bird(win):
-    global bird
-    bird.setFill(birdColor)
-    bird.setOutline(birdColor)
-    bird.draw(win)
-
-def draw_enemy(win):
-    xPos = random.randint(enemyRadious, WIN_WIDTH - enemyRadious)
-    yPos = random.randint(enemyRadious, WIN_HEIGHT - enemyRadious)
-
-    enemy = Circle(Point(xPos + WIN_WIDTH, yPos), enemyRadious)
-    enemy.setFill(enemyColor)
-    enemy.setOutline(enemyColor)
-    enemy.draw(win)
-
-    global enemyList
-    enemyList.append(enemy)
+    def set_dead_color(self):
+        self.birds[0].circle.setFill('red')
+        self.birds[0].circle.setOutline('red')
     
-def move_enemy():
-    global enemyList
-    for e in enemyList:
-        e.move(-enemySpeed, 0)
+    def remove_bird(self):
+        self.birds[0].remove_cBall()
+        
+    def boundories(self):
+        bird = self.birds[0]
+        if bird.circle.getCenter().getY() + bird.radious < 0 or bird.circle.getCenter().getY() - bird.radious > WIN_HEIGHT:
+            global game_lost
+            game_lost = True
 
-def move_bird():
-    global bird
-    bird.move(0, birdDirection * birdSpeed)
-
-def change_direction():
-    global birdDirection
-    birdDirection *= -1
-
-def bird_boundories():
-    if bird.getCenter().getY() + birdRadious < 0 or bird.getCenter().getY() - birdRadious > WIN_HEIGHT:
-        global game_lost
-        game_lost = True
-
-def remove_enemies():
-    global enemyList
-    for e in enemyList:
-        if e.getCenter().getX() < -enemyRadious:
-            enemyList.remove(e)
-            e.undraw()
-
-def remove_all():
-    global enemyList
-    for e in enemyList:
-        enemyList.remove(e)
-        e.undraw()
-    global bird
-    bird.undraw()
+    def check_collision(self, enemies):
+        birdCircle = self.birds[0].circle
+        for enemy in enemies:
+            dx = birdCircle.getCenter().getX() - enemy.circle.getCenter().getX()
+            dy = birdCircle.getCenter().getY() - enemy.circle.getCenter().getY()
+            length = math.sqrt(abs((dx*dx) + (dy*dy)))
+            if length < self.birds[0].radious + enemy.radious:
+                global bird_collided
+                bird_collided = True
+                break
     
-def create_enemies(win):
-    enemiesOnRight = False
-    
-    for e in enemyList:
-        if e.getCenter().getX() + enemyRadious > WIN_WIDTH:
-            enemiesOnRight = True
-            break
-    if enemiesOnRight == False:
-        for i in range(enemyTotalPerScreen):
-            draw_enemy(win)
+    def handle_input(self):
+        key = self.birds[0].win.checkKey()
+        if key == "space":
+            self.birds[0].invert_direction()
+        elif key == "Escape":
+            global exit_game
+            exit_game = True
 
-def bird_check_collision():
-    for e in enemyList:
-        dx = bird.getCenter().getX() - e.getCenter().getX()
-        dy = bird.getCenter().getY() - e.getCenter().getY()
-        length = math.sqrt(abs((dx*dx) + (dy*dy)))
-        if length < birdRadious + enemyRadious:
-            global bird_collided
-            bird_collided = True
-            break
+    def update(self, enemies):
+        self.handle_input()
+        self.birds[0].move_cBall()
+        self.boundories()
+        self.check_collision(enemies)
+
+class EnemyGroup():
+    def __init__(self, max_enemies):
+        self.max_enemies = max_enemies
+        self.enemies = []
+
+    def add_enemy(self, enemy):
+        self.enemies.append(enemy)
+
+    def remove_enemies(self):
+        for enemy in self.enemies:
+            enemy.remove_cBall()
+
+    def boundories(self):
+        for enemy in self.enemies:
+            if enemy.circle.getCenter().getX() + enemy.radious < 0:
+                enemy.remove_cBall()
+                self.enemies.remove(enemy)
+
+    def can_create_new_enemies(self, win):
+        for enemy in self.enemies:
+            if enemy.circle.getCenter().getX() + enemy.radious > WIN_WIDTH:
+                return
+        for i in range(self.max_enemies):
+            self.add_enemy(create_enemy(win))
+            
+    def update(self, win):
+        for enemy in self.enemies:
+            enemy.move_cBall()
+        self.boundories()
+        self.can_create_new_enemies(win)
+        
+class cBall():
+    def __init__(self, xPos, yPos, radious, direction, x_speed, y_speed, color, win):
+        self.xPos = xPos
+        self.yPos = yPos
+        self.radious = radious
+        self.direction = direction
+        self.x_speed = x_speed
+        self.y_speed = y_speed
+        self.color = color
+        self.win = win
+        self.circle = self.create_cBall()
+
+    def create_cBall(self):
+        circle = Circle(Point(self.xPos, self.yPos), self.radious)
+        circle.setFill(self.color)
+        circle.setOutline(self.color)
+        circle.draw(self.win)
+        return circle
+
+    def move_cBall(self):
+        self.xPos += self.x_speed * self.direction
+        self.yPos += self.y_speed * self.direction
+        self.circle.move(self.x_speed * self.direction, self.y_speed * self.direction)
+
+    def invert_direction(self):
+        self.direction = -self.direction
+
+    def remove_cBall(self):
+        self.circle.undraw()
+
+
+def create_enemy(win):
+    xPos = random.randint(12, WIN_WIDTH - 12)
+    yPos = random.randint(12, WIN_HEIGHT - 12)
+    circle = cBall(xPos + WIN_WIDTH, yPos, 12, -1, 6, 0, enemyColor, win)
+    return circle
 
 def main():
     win = GraphWin(WIN_TITLE, WIN_WIDTH, WIN_HEIGHT)
-    draw_bird(win)
+    bird = Bird(1)
+    bird.add_bird(cBall(WIN_WIDTH / 8, WIN_HEIGHT / 2, 6, 1, 0, 6, birdColor, win))
+    enemyGroup = EnemyGroup(16)
 
     global game_lost
-    global bird
     
     while(1):
-        handle_input(win)
-        create_enemies(win)
-        move_bird()
-        move_enemy()
-        remove_enemies()
-        bird_boundories()
-        bird_check_collision()
+        bird.update(enemyGroup.enemies)
+        enemyGroup.update(win)
         update(UPDATE_RATE)
 
         if exit_game or game_lost or bird_collided:
             break
         
     if bird_collided:
-        bird.setFill('red')
-        bird.setOutline('red')
+        bird.set_dead_color()
         game_lost = True
-        time.sleep(3)
+        time.sleep(1)
         
-
     if game_lost:
+
         while win.checkKey() != "Escape":
-            remove_all()
+            enemyGroup.remove_enemies()
+            bird.remove_bird()
             message = Text(Point(WIN_WIDTH / 2, WIN_HEIGHT * 2/5), 'G A M E   O V E R')
             message.setSize(32)
             message.setFace('helvetica')
