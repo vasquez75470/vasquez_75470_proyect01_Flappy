@@ -13,6 +13,11 @@ WIN_WIDTH = 500
 WIN_HEIGHT = 500
 WIN_TITLE = 'Flappy'
 
+#Define Global Variables
+exit_game = False
+game_lost = False
+bird_collided = False
+
 #Define Bird Variables
 birdColor = color_rgb(0,102,0)
 
