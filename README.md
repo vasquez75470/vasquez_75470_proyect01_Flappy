@@ -1,4 +1,4 @@
-# vasquez_75470_proyect01_B Flappy
+# vasquez_75470_proyect01_A Flappy
 1. A flappy game where you can move up and down the circle.
 2. Instructions: keys backspace to move the circle
 2. Create one main for run the functions
